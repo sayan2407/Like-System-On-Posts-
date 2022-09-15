@@ -1,0 +1,14 @@
+.custom_container{
+    margin: 15px;
+    padding: 25px;
+}
+
+.custom_enable_like {
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
+#flexSwitchCheckDefault {
+    margin-left: 15px;
+}
