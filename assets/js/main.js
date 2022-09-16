@@ -1,4 +1,5 @@
 jQuery(document).ready( function() {
+
     jQuery('.save_like_system').click(function() {
         let isSystemEnable = jQuery('.like_enable').prop('checked');
 
@@ -32,4 +33,6 @@ jQuery(document).ready( function() {
 
         } )
     })
+
+    
 } )

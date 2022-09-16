@@ -19,12 +19,120 @@
 
  add_action( 'wp_ajax_like_system', 'saved_like_system_info' );
  add_action( 'wp_ajax__nopriv_like_system', 'saved_like_system_info' );
+ 
+
+ add_action( 'wp_ajax_like_dislike', 'save_like_dislike' );
+ add_action( 'wp_ajax__nopriv_like_dislike', 'save_like_dislike' );
 
  add_action( 'admin_init', 'custom_admin_changes' );
 
+ add_filter( 'the_content', 'custom_like' );
+
+ function save_like_dislike() {
+    $post_id = $_POST['postId'];
+    $user_id = $_POST['userId'];
+
+    $is_user_liked = get_user_meta( $user_id, $post_id, true );
+
+    if ( empty( $is_user_liked ) )
+       $is_user_liked = 0;
+
+    $num_of_likes = get_post_meta( $post_id, 'post_likes', true );
+
+    if ( empty( $num_of_likes ) )
+       $num_of_likes = 0;
+    
+    $result = [];
+    if ( $is_user_liked ) {
+         $num_of_likes-=1;
+         $result['value'] = 'dislike';
+        update_user_meta( $user_id, $post_id, 0 );
+
+
+     } else {
+
+         $num_of_likes+=1;
+         $result['value'] = 'like';
+        update_user_meta( $user_id, $post_id, 1 );
+
+
+     }
+     $result['num_of_likes'] = $num_of_likes;
+     update_post_meta( $post_id, 'post_likes', $num_of_likes );
+
+     json_encode( $result );
+
+     wp_send_json($result);
+
+    //  echo $result;
+     die();
+
+ }
+
+ function custom_like( $content ) {
+
+    global $post;
+    $user_id = get_current_user_id();
+     $post_likes = get_post_meta( $post->ID, 'post_likes', true );
+     if( empty( $post_likes ) ) {
+         $post_likes = 0;
+     }
+     $is_like_enable = get_option('is_like_system_enabled');
+
+     if( $is_like_enable ) {
+
+         $like_position = get_option( 'like_icon_position' );
+         $like_icon = get_option( 'like_icon' );
+         $like_url = "";
+         if( $like_icon == "0" ) {
+             $like_url = plugin_dir_url(__FILE__).'assets/images/before_like.png';
+         } else {
+            $like_url = plugin_dir_url(__FILE__).'assets/images/like_before.png';
+
+         }
+
+         ob_start();
+
+         error_log('like_position ' . $like_position);
+
+         if( $like_position == "3" || $like_position == "1" ) {
+             ?>
+              <div class="like_position" style="display:flex; justify-content: flex-end">
+                <img class="click_on_like" float="right" style="width:30px; height:30px" src="<?php echo $like_url; ?>">
+                <span class="num_of_likes"><?php _e( $post_likes. ' likes', 'likeposts'); ?></span>
+             </div>
+             <?php             
+         } else if ( $like_position == "4" || $like_position == "0" ) {
+            ?>
+              <div class="like_position" style="display:flex; justify-content: flex-start">
+                <img class="click_on_like" float="left" style="width:30px; height:30px" src="<?php echo $like_url; ?>">
+                <span class="num_of_likes"><?php _e( $post_likes. ' likes', 'likeposts'); ?></span>
+
+
+             </div>
+         <?php  
+         } else {
+            ?>
+               <div class="like_position" style="display:flex; alignt-items: center; justify-content: center;">
+               <img class="click_on_like" float="center" style="width:30px; height:30px" src="<?php echo $like_url; ?>">
+               <span class="num_of_likes"><?php _e( $post_likes. ' likes', 'likeposts'); ?></span>
+
+
+            </div>
+         <?php  
+         }
+
+     }
+
+     if( $like_position == "0" || $like_position == "1" || $like_position == "1" )
+         return ob_get_clean().$content;
+     else
+          return $content . ob_get_clean();
+
+ }
  function custom_admin_changes() {
 
-    add_option( 'is_like_system_enabled', false );
+     add_option( 'is_like_system_enabled', false );
      add_option( 'like_icon', 0 );
      add_option( 'like_icon_position', 0 );
 
@@ -130,9 +238,21 @@
 
  function frontend_custom_scripts() {
 
-    error_log('plugin_folder ' . plugin_dir_url(__FILE__) );
+    global $post;
+
+    $user_id = get_current_user_id();
+    $post_id = $post->ID;
+
     wp_enqueue_style( 'custom-css', plugin_dir_url(__FILE__).'assets/css/style.css' );
     wp_enqueue_script( 'custom-js', plugin_dir_url(__FILE__).'assets/js/main.js' );
+
+    wp_enqueue_script( 'like-js', plugin_dir_url(__FILE__).'assets/js/like-system.js' );
+
+    wp_localize_script( 'like-js', 'likesystem', [
+        'ajaxurl'   =>  admin_url('admin-ajax.php'),
+        'post_id'   =>  $post_id,
+        'user_id'   =>  $user_id
+    ] );
 
   
  }
