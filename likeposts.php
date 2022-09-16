@@ -78,8 +78,9 @@
          $post_likes = 0;
      }
      $is_like_enable = get_option('is_like_system_enabled');
+     error_log('is_like_enable ' . $is_like_enable);
 
-     if( $is_like_enable ) {
+     if( $is_like_enable == "true") {
 
          $like_position = get_option( 'like_icon_position' );
          $like_icon = get_option( 'like_icon' );
@@ -122,6 +123,9 @@
          <?php  
          }
 
+     } else {
+         error_log('else');
+         return $content;
      }
 
      if( $like_position == "0" || $like_position == "1" || $like_position == "1" )
